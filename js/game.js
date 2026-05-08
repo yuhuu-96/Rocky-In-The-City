@@ -83,12 +83,41 @@ function drawGround(){
   ctx.shadowColor='#f97316';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
 }
 
+// Rocky video sprite - uses mp_.mp4 for exact walking animation
+const rockyVid=document.createElement('video');
+rockyVid.src='assets/mp_.mp4';rockyVid.loop=true;rockyVid.muted=true;rockyVid.playsInline=true;
+rockyVid.style.display='none';document.body.appendChild(rockyVid);
+rockyVid.play().catch(()=>{});
 function drawRocky(){
   const duck=rock.ducking&&!rock.jumps;
+  const spd=Math.min((speed-5)/11,1);
   const cx=rock.x+(duck?rock.dw:rock.nw)/2;
   const feetY=rock.y+(duck?rock.dh:rock.nh);
-  const cy=feetY-(duck?38:60);
-  drawRockyGolem(ctx,cx,cy,walkPhase,speed,duck,rock.jumps>0,rock.landBounce);
+  const bob=duck||rock.jumps>0?0:Math.abs(Math.sin(walkPhase))*(2+spd*4);
+  const dw=duck?85:115,dh=duck?58:115;
+  const feetFrac=0.87;
+  const drawX=cx-dw/2,drawY=(feetY-bob)-dh*feetFrac;
+  // Sync video playback speed to game speed
+  rockyVid.playbackRate=Math.max(0.5,Math.min(2.5,0.6+spd*1.8));
+  if(running&&rockyVid.paused)rockyVid.play().catch(()=>{});
+  if(!running&&!rockyVid.paused)rockyVid.pause();
+  if(duck){rockyVid.playbackRate=0.4;}
+  ctx.save();
+  // Dark soft vignette behind Rocky so screen blend removes black bg correctly
+  const rg=ctx.createRadialGradient(cx,feetY-bob-dh*0.42,0,cx,feetY-bob-dh*0.42,dw*0.52);
+  rg.addColorStop(0,'rgba(0,0,0,0.82)');rg.addColorStop(0.7,'rgba(0,0,0,0.65)');rg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=rg;
+  ctx.beginPath();ctx.ellipse(cx,feetY-bob-dh*0.42,dw*0.52,dh*0.5,0,0,Math.PI*2);ctx.fill();
+  // Draw video frame with screen composite to remove black background
+  if(rockyVid.readyState>=2){
+    ctx.globalCompositeOperation='screen';
+    ctx.drawImage(rockyVid,drawX,drawY,dw,dh);
+    ctx.globalCompositeOperation='source-over';
+  }else{
+    // Fallback while video loads
+    drawRockyGolem(ctx,cx,feetY-bob-60,walkPhase,speed,duck,rock.jumps>0,rock.landBounce);
+  }
+  ctx.restore();
 }
 
 function drawObs(){
@@ -208,4 +237,5 @@ document.getElementById('mDuck').addEventListener('mouseup',()=>doDuck(false));
 document.getElementById('mDuck').addEventListener('touchstart',()=>doDuck(true),{passive:true});
 document.getElementById('mDuck').addEventListener('touchend',()=>doDuck(false),{passive:true});
 gameLoop();
+
 
