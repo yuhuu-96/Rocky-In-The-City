@@ -24,34 +24,7 @@ const TILE_W=44,TILE_N=Math.ceil(W/TILE_W)+2;
 const batuImg=new Image();batuImg.src='assets/batu.png';let bLoaded=false;
 batuImg.onload=()=>bLoaded=true;
 
-// Rocky image - remove black background via canvas processing
-const rockyImg=new Image();
-let rockyCanvas=null; // processed (transparent bg)
-let rockyImgReady=false;
-function processRocky(img){
-  try{
-    const oc=document.createElement('canvas');
-    oc.width=img.width;oc.height=img.height;
-    const ox=oc.getContext('2d');
-    ox.drawImage(img,0,0);
-    const id=ox.getImageData(0,0,img.width,img.height);
-    const d=id.data;
-    for(let i=0;i<d.length;i+=4){
-      const r=d[i],g=d[i+1],b=d[i+2];
-      const brightness=(r+g+b)/3;
-      if(r<50&&g<50&&b<50){d[i+3]=0;}
-      else if(brightness<80){d[i+3]=Math.floor((brightness/80)*255);}
-    }
-    ox.putImageData(id,0,0);
-    rockyCanvas=oc;
-  }catch(e){
-    // CORS fallback (local file://) - use screen composite
-    rockyCanvas=null;
-  }
-  rockyImgReady=true;
-}
-rockyImg.onload=()=>processRocky(rockyImg);
-rockyImg.src='assets/Rocky.png';
+
 
 // Background
 const bgCity=[];
@@ -110,42 +83,12 @@ function drawGround(){
   ctx.shadowColor='#f97316';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
 }
 
-// Rocky - drawn using the real PNG asset
 function drawRocky(){
   const duck=rock.ducking&&!rock.jumps;
-  const spd=Math.min((speed-5)/11,1);
   const cx=rock.x+(duck?rock.dw:rock.nw)/2;
   const feetY=rock.y+(duck?rock.dh:rock.nh);
-
-  // Walk animation
-  const bob=duck||rock.jumps>0?0:Math.abs(Math.sin(walkPhase))*(2+spd*4);
-  const lean=duck?0:(rock.jumps>0?-0.06:Math.sin(walkPhase*0.5)*0.04*spd);
-  const sqX=rock.landBounce>0?1-rock.landBounce*0.1:1;
-  const sqY=rock.landBounce>0?1+rock.landBounce*0.13:1;
-
-  // Draw size: Rocky.png character feet are at ~88% of image height
-  const dw=duck?80:110;
-  const dh=duck?55:110;
-  const feetFrac=0.88;
-
-  const src=rockyCanvas||(rockyImgReady?rockyImg:null);
-  if(!src)return;
-
-  ctx.save();
-  ctx.translate(cx,feetY-bob);
-  ctx.rotate(lean);
-  ctx.scale(sqX,sqY*(duck?0.65:1));
-
-  if(rockyCanvas){
-    // Clean transparent version
-    ctx.drawImage(rockyCanvas,-dw/2,-dh*feetFrac,dw,dh);
-  }else{
-    // Fallback: screen blend removes black on dark areas
-    ctx.globalCompositeOperation='screen';
-    ctx.drawImage(rockyImg,-dw/2,-dh*feetFrac,dw,dh);
-    ctx.globalCompositeOperation='source-over';
-  }
-  ctx.restore();
+  const cy=feetY-(duck?38:60);
+  drawRockyGolem(ctx,cx,cy,walkPhase,speed,duck,rock.jumps>0,rock.landBounce);
 }
 
 function drawObs(){
@@ -265,3 +208,4 @@ document.getElementById('mDuck').addEventListener('mouseup',()=>doDuck(false));
 document.getElementById('mDuck').addEventListener('touchstart',()=>doDuck(true),{passive:true});
 document.getElementById('mDuck').addEventListener('touchend',()=>doDuck(false),{passive:true});
 gameLoop();
+
