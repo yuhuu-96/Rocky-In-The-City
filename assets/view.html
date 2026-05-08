@@ -1,0 +1,11 @@
+﻿<!DOCTYPE html><html><body style="background:#000;display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px">
+<video id="v" src="mp_.mp4" width="600" controls style="border:2px solid #f97316"></video>
+<div style="display:flex;gap:8px;flex-wrap:wrap" id="frames"></div>
+<canvas id="c" width="600" height="400" style="display:none"></canvas>
+<button onclick="cap()" style="padding:10px 24px;font-size:1rem;background:#f97316;color:#fff;border:none;border-radius:8px;cursor:pointer">Capture Frame</button>
+<script>
+const v=document.getElementById('v'),c=document.getElementById('c'),x=c.getContext('2d');
+function cap(){x.drawImage(v,0,0,600,400);const img=document.createElement('img');img.src=c.toDataURL();img.style='width:200px;border:1px solid #666';document.getElementById('frames').appendChild(img);}
+// Auto capture every 0.2s while playing
+v.addEventListener('timeupdate',()=>{if(Math.round(v.currentTime*5)%1===0)cap();});
+</script></body></html>
