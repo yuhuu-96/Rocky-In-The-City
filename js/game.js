@@ -1,19 +1,11 @@
-// -- Game Engine --
-const canvas=document.getElementById('gameCanvas');
+﻿const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
 const W=920,H=290,GY=H-55;
-
-// Rocky state
 const rock={x:85,y:GY-68,nw:52,nh:68,dw:72,dh:38,vy:0,jumps:0,ducking:false,landBounce:0};
 let walkPhase=0;
 function resetRock(){rock.y=GY-rock.nh;rock.vy=0;rock.ducking=false;rock.jumps=0;rock.landBounce=0;}
 function doJump(){if(!running)return;if(rock.jumps<1){rock.vy=-15;rock.jumps++;}}
-function doDuck(on){
-  if(!running)return;rock.ducking=on;
-  if(!rock.jumps){rock.y=GY-(on?rock.dh:rock.nh);}
-}
-
-// Obstacles
+function doDuck(on){if(!running)return;rock.ducking=on;if(!rock.jumps){rock.y=GY-(on?rock.dh:rock.nh);}}
 const OBS_TYPES=[
   {id:'bld_sm',w:26,h:55,cl:'#4a5568',ac:'#718096'},
   {id:'bld_md',w:34,h:78,cl:'#2d3748',ac:'#4a5568'},
@@ -26,40 +18,25 @@ let oTimer=0,gTimer=0,oInt=88;
 let running=false,dead=false,score=0,sTimer=0,ufoT=0,speed=5;
 let tileOff=0;
 const TILE_W=44,TILE_N=Math.ceil(W/TILE_W)+2;
-
-// Gem image
 const batuImg=new Image();batuImg.src='assets/batu.png';let bLoaded=false;
 batuImg.onload=()=>bLoaded=true;
-
-// Background
 const bgCity=[];
 for(let i=0;i<22;i++)bgCity.push({x:Math.random()*W,w:18+Math.random()*70,h:28+Math.random()*100,op:.25+Math.random()*.2});
 const bgClouds=[];
 for(let i=0;i<8;i++)bgClouds.push({x:Math.random()*W,y:15+Math.random()*70,w:55+Math.random()*70,h:18+Math.random()*18,sp:0.25+Math.random()*0.4});
-
 function spawnGem(){gems.push({x:W+10,y:GY-80-Math.random()*55,sz:22,bob:Math.random()*Math.PI*2});}
-function spawnObs(){
-  const t={...OBS_TYPES[Math.floor(Math.random()*OBS_TYPES.length)]};
-  t.x=W+10;
-  if(t.fly){t.baseY=GY-t.h-65-Math.random()*40;t.y=t.baseY;}
-  obs.push(t);
-}
+function spawnObs(){const t={...OBS_TYPES[Math.floor(Math.random()*OBS_TYPES.length)]};t.x=W+10;if(t.fly){t.baseY=GY-t.h-65-Math.random()*40;t.y=t.baseY;}obs.push(t);}
 function spawnPart(x,y,col){for(let i=0;i<8;i++)parts.push({x,y,col,vx:(Math.random()-.5)*6,vy:(Math.random()-1.8)*5,life:1,sz:3+Math.random()*4});}
-
-// -- Draw --
 function drawSky(){
-  // Morning gradient
   const g=ctx.createLinearGradient(0,0,0,GY);
   g.addColorStop(0,'#2e86c1');g.addColorStop(0.45,'#87ceeb');g.addColorStop(0.82,'#ffd580');g.addColorStop(1,'#ff9a3c');
   ctx.fillStyle=g;ctx.fillRect(0,0,W,GY);
-  // Sun
   const sx=820,sy=48;
   const sg=ctx.createRadialGradient(sx,sy,6,sx,sy,55);
   sg.addColorStop(0,'rgba(255,230,60,.55)');sg.addColorStop(1,'rgba(255,180,0,0)');
   ctx.fillStyle=sg;ctx.fillRect(sx-55,sy-55,110,110);
   ctx.beginPath();ctx.arc(sx,sy,22,0,Math.PI*2);ctx.fillStyle='#FFE66D';ctx.fill();
   ctx.beginPath();ctx.arc(sx,sy,16,0,Math.PI*2);ctx.fillStyle='#FFC107';ctx.fill();
-  // Clouds
   bgClouds.forEach(c=>{
     ctx.save();ctx.globalAlpha=0.78;ctx.fillStyle='#fff';
     ctx.beginPath();ctx.ellipse(c.x,c.y,c.w/2,c.h/2,0,0,Math.PI*2);ctx.fill();
@@ -67,10 +44,8 @@ function drawSky(){
     ctx.beginPath();ctx.ellipse(c.x+c.w*.25,c.y+c.h*.12,c.w*.32,c.h*.42,0,0,Math.PI*2);ctx.fill();
     ctx.restore();
   });
-  // BG city silhouette
   bgCity.forEach(b=>{
     ctx.fillStyle=`rgba(45,62,80,${b.op})`;ctx.fillRect(b.x,GY-b.h,b.w,b.h);
-    // faint windows (daytime – mostly dark)
     for(let r=4;r<b.h-8;r+=13)for(let c=3;c<b.w-3;c+=10){
       if(Math.random()>.8){ctx.fillStyle=`rgba(200,220,255,${b.op*.7})`;ctx.fillRect(b.x+c,GY-b.h+r,5,7);}
     }
@@ -92,11 +67,9 @@ function drawGround(){
   ctx.strokeStyle='#f97316';ctx.lineWidth=2.5;
   ctx.shadowColor='#f97316';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
 }
-// Golem visual: feet are ~66px below center (standing), ~49px below center (ducking)
 function drawRocky(){
   const duck=rock.ducking&&!rock.jumps;
   const cx=rock.x+(duck?rock.dw:rock.nw)/2;
-  // Align feet exactly to the ground (rock.y + nh = GY when on ground)
   const feetY=rock.y+(duck?rock.dh:rock.nh);
   const cy=feetY-(duck?49:66);
   drawRockyGolem(ctx,cx,cy,walkPhase,speed,duck,rock.jumps>0,rock.landBounce);
@@ -157,15 +130,8 @@ function drawHUD(){
   ctx.fillStyle=`rgba(249,${Math.floor(115-sp*90)},22,.85)`;ctx.fillRect(14,16,80*sp,6);
   if(sp>0.05){ctx.font='bold 9px Exo 2,sans-serif';ctx.fillStyle='rgba(249,115,22,.55)';ctx.fillText('SPEED',14,12);}
 }
-
-// -- Physics --
-function getRR(){
-  const duck=rock.ducking&&!rock.jumps;
-  const rw=duck?rock.dw:rock.nw,rh=duck?rock.dh:rock.nh;
-  return{x:rock.x+8,y:duck?GY-rh+4:rock.y+8,w:rw-16,h:rh-12};
-}
+function getRR(){const duck=rock.ducking&&!rock.jumps;const rw=duck?rock.dw:rock.nw,rh=duck?rock.dh:rock.nh;return{x:rock.x+8,y:duck?GY-rh+4:rock.y+8,w:rw-16,h:rh-12};}
 function col(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
-
 function update(){
   if(!running)return;
   ufoT+=.05;
@@ -186,25 +152,14 @@ function update(){
   bgClouds.forEach(c=>{c.x-=c.sp;if(c.x+c.w<0)c.x=W+c.w;});
   rock.vy+=.72;rock.y+=rock.vy;
   const fl=GY-(rock.ducking&&!rock.jumps?rock.dh:rock.nh);
-  if(rock.y>=fl){
-    if(rock.jumps>0)rock.landBounce=1;
-    rock.y=fl;rock.vy=0;rock.jumps=0;
-  }
+  if(rock.y>=fl){if(rock.jumps>0)rock.landBounce=1;rock.y=fl;rock.vy=0;rock.jumps=0;}
   if(rock.landBounce>0)rock.landBounce=Math.max(0,rock.landBounce-.09);
   const rr=getRR();
-  for(const o of obs){
-    const oy=o.fly?o.y:GY-o.h;
-    if(col(rr,{x:o.x+4,y:oy+4,w:o.w-8,h:o.h-4})){doGameOver();return;}
-  }
-  gems=gems.filter(g=>{
-    if(col(rr,{x:g.x,y:g.y,w:g.sz,h:g.sz})){score+=20;spawnPart(g.x+g.sz/2,g.y+g.sz/2,'rgb(249,115,22)');return false;}
-    return true;
-  });
+  for(const o of obs){const oy=o.fly?o.y:GY-o.h;if(col(rr,{x:o.x+4,y:oy+4,w:o.w-8,h:o.h-4})){doGameOver();return;}}
+  gems=gems.filter(g=>{if(col(rr,{x:g.x,y:g.y,w:g.sz,h:g.sz})){score+=20;spawnPart(g.x+g.sz/2,g.y+g.sz/2,'rgb(249,115,22)');return false;}return true;});
 }
-
 function doGameOver(){
-  running=false;dead=true;
-  let nb=false;
+  running=false;dead=true;let nb=false;
   if(score>S.best){S.best=score;nb=true;}
   document.getElementById('bestDisplay').textContent=String(S.best).padStart(5,'0');
   recordScore(S.username,score,S.googleUser?.sub||'guest');
@@ -213,10 +168,8 @@ function doGameOver(){
   document.getElementById('goOverlay').classList.remove('hidden');
   showToast(nb?`New best: ${S.best}!`:`Score: ${score}`);
 }
-
 function render(){ctx.clearRect(0,0,W,H);drawSky();drawGround();drawGems();drawObs();drawRocky();drawParts();drawHUD();}
 function gameLoop(){update();render();requestAnimationFrame(gameLoop);}
-
 function startGame(){
   score=0;speed=5;sTimer=0;oTimer=0;gTimer=0;obs=[];gems=[];parts=[];walkPhase=0;
   resetRock();running=true;dead=false;
@@ -224,8 +177,6 @@ function startGame(){
   document.getElementById('goOverlay').classList.add('hidden');
   document.getElementById('scoreDisplay').textContent='00000';
 }
-
-// Controls
 document.addEventListener('keydown',e=>{
   if(['Space','ArrowUp'].includes(e.code)){e.preventDefault();if(!running&&!dead)startGame();else doJump();}
   if(e.code==='ArrowDown'){e.preventDefault();doDuck(true);}
@@ -239,5 +190,4 @@ document.getElementById('mDuck').addEventListener('mousedown',()=>doDuck(true));
 document.getElementById('mDuck').addEventListener('mouseup',()=>doDuck(false));
 document.getElementById('mDuck').addEventListener('touchstart',()=>doDuck(true),{passive:true});
 document.getElementById('mDuck').addEventListener('touchend',()=>doDuck(false),{passive:true});
-
 gameLoop();

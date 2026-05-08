@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap');
 :root{--bg:#0a0e1a;--surface:#111827;--card:#16213e;--border:rgba(249,115,22,.25);--accent:#f97316;--accent2:#fb923c;--gold:#fbbf24;--silver:#94a3b8;--bronze:#cd7c3a;--text:#e2e8f0;--muted:#64748b;--danger:#ef4444;--glow:0 0 24px rgba(249,115,22,.5);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;overflow-x:hidden;}
@@ -10,9 +10,9 @@ body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-h
 #loginScreen{min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;}
 .login-wrap{width:min(460px,100%);animation:slideUp .7s cubic-bezier(.34,1.56,.64,1) both;}
 @keyframes slideUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
-.hero-banner{background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid var(--border);border-bottom:none;border-radius:20px 20px 0 0;padding:2.5rem 2rem 2rem;display:flex;flex-direction:column;align-items:center;gap:1rem;position:relative;overflow:hidden;}
-.hero-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% -20%,rgba(249,115,22,.18),transparent 70%);pointer-events:none;}
-.hero-rocky{width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 24px rgba(249,115,22,.7));animation:float 3s ease-in-out infinite;}
+.hero-banner{background:linear-gradient(135deg,#faf8f3,#f0ebe0);border:1px solid var(--border);border-bottom:none;border-radius:20px 20px 0 0;padding:2.5rem 2rem 2rem;display:flex;flex-direction:column;align-items:center;gap:1rem;position:relative;overflow:hidden;}
+.hero-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 110%,rgba(249,115,22,.10),transparent 60%);pointer-events:none;}
+.hero-rocky{width:280px;height:auto;object-fit:contain;mix-blend-mode:multiply;animation:float 3s ease-in-out infinite;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .game-title{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--gold),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.1em;text-align:center;}
 .game-sub{color:var(--muted);font-size:.8rem;letter-spacing:.25em;text-transform:uppercase;}
@@ -87,3 +87,4 @@ canvas{display:block;width:100%;height:auto;}
 .lb-empty{text-align:center;color:var(--muted);padding:2.5rem;font-size:.9rem;}
 .toast{position:fixed;bottom:1.8rem;left:50%;transform:translateX(-50%) translateY(120px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.7rem 1.5rem;font-size:.9rem;color:var(--text);box-shadow:0 10px 36px rgba(0,0,0,.5);z-index:300;transition:transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+
