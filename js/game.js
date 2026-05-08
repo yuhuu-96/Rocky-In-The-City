@@ -6,6 +6,7 @@ let walkPhase=0;
 function resetRock(){rock.y=GY-rock.nh;rock.vy=0;rock.ducking=false;rock.jumps=0;rock.landBounce=0;}
 function doJump(){if(!running)return;if(rock.jumps<1){rock.vy=-15;rock.jumps++;}}
 function doDuck(on){if(!running)return;rock.ducking=on;if(!rock.jumps){rock.y=GY-(on?rock.dh:rock.nh);}}
+
 const OBS_TYPES=[
   {id:'bld_sm',w:26,h:55,cl:'#4a5568',ac:'#718096'},
   {id:'bld_md',w:34,h:78,cl:'#2d3748',ac:'#4a5568'},
@@ -18,15 +19,56 @@ let oTimer=0,gTimer=0,oInt=88;
 let running=false,dead=false,score=0,sTimer=0,ufoT=0,speed=5;
 let tileOff=0;
 const TILE_W=44,TILE_N=Math.ceil(W/TILE_W)+2;
+
+// Gem image
 const batuImg=new Image();batuImg.src='assets/batu.png';let bLoaded=false;
 batuImg.onload=()=>bLoaded=true;
+
+// Rocky image - remove black background via canvas processing
+const rockyImg=new Image();
+let rockyCanvas=null; // processed (transparent bg)
+let rockyImgReady=false;
+function processRocky(img){
+  try{
+    const oc=document.createElement('canvas');
+    oc.width=img.width;oc.height=img.height;
+    const ox=oc.getContext('2d');
+    ox.drawImage(img,0,0);
+    const id=ox.getImageData(0,0,img.width,img.height);
+    const d=id.data;
+    for(let i=0;i<d.length;i+=4){
+      const r=d[i],g=d[i+1],b=d[i+2];
+      const brightness=(r+g+b)/3;
+      if(r<50&&g<50&&b<50){d[i+3]=0;}
+      else if(brightness<80){d[i+3]=Math.floor((brightness/80)*255);}
+    }
+    ox.putImageData(id,0,0);
+    rockyCanvas=oc;
+  }catch(e){
+    // CORS fallback (local file://) - use screen composite
+    rockyCanvas=null;
+  }
+  rockyImgReady=true;
+}
+rockyImg.onload=()=>processRocky(rockyImg);
+rockyImg.src='assets/Rocky.png';
+
+// Background
 const bgCity=[];
 for(let i=0;i<22;i++)bgCity.push({x:Math.random()*W,w:18+Math.random()*70,h:28+Math.random()*100,op:.25+Math.random()*.2});
 const bgClouds=[];
 for(let i=0;i<8;i++)bgClouds.push({x:Math.random()*W,y:15+Math.random()*70,w:55+Math.random()*70,h:18+Math.random()*18,sp:0.25+Math.random()*0.4});
+
 function spawnGem(){gems.push({x:W+10,y:GY-80-Math.random()*55,sz:22,bob:Math.random()*Math.PI*2});}
-function spawnObs(){const t={...OBS_TYPES[Math.floor(Math.random()*OBS_TYPES.length)]};t.x=W+10;if(t.fly){t.baseY=GY-t.h-65-Math.random()*40;t.y=t.baseY;}obs.push(t);}
+function spawnObs(){
+  const t={...OBS_TYPES[Math.floor(Math.random()*OBS_TYPES.length)]};
+  t.x=W+10;
+  if(t.fly){t.baseY=GY-t.h-65-Math.random()*40;t.y=t.baseY;}
+  obs.push(t);
+}
 function spawnPart(x,y,col){for(let i=0;i<8;i++)parts.push({x,y,col,vx:(Math.random()-.5)*6,vy:(Math.random()-1.8)*5,life:1,sz:3+Math.random()*4});}
+
+// Sky
 function drawSky(){
   const g=ctx.createLinearGradient(0,0,0,GY);
   g.addColorStop(0,'#2e86c1');g.addColorStop(0.45,'#87ceeb');g.addColorStop(0.82,'#ffd580');g.addColorStop(1,'#ff9a3c');
@@ -67,13 +109,45 @@ function drawGround(){
   ctx.strokeStyle='#f97316';ctx.lineWidth=2.5;
   ctx.shadowColor='#f97316';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
 }
+
+// Rocky - drawn using the real PNG asset
 function drawRocky(){
   const duck=rock.ducking&&!rock.jumps;
+  const spd=Math.min((speed-5)/11,1);
   const cx=rock.x+(duck?rock.dw:rock.nw)/2;
   const feetY=rock.y+(duck?rock.dh:rock.nh);
-  const cy=feetY-(duck?49:66);
-  drawRockyGolem(ctx,cx,cy,walkPhase,speed,duck,rock.jumps>0,rock.landBounce);
+
+  // Walk animation
+  const bob=duck||rock.jumps>0?0:Math.abs(Math.sin(walkPhase))*(2+spd*4);
+  const lean=duck?0:(rock.jumps>0?-0.06:Math.sin(walkPhase*0.5)*0.04*spd);
+  const sqX=rock.landBounce>0?1-rock.landBounce*0.1:1;
+  const sqY=rock.landBounce>0?1+rock.landBounce*0.13:1;
+
+  // Draw size: Rocky.png character feet are at ~88% of image height
+  const dw=duck?80:110;
+  const dh=duck?55:110;
+  const feetFrac=0.88;
+
+  const src=rockyCanvas||(rockyImgReady?rockyImg:null);
+  if(!src)return;
+
+  ctx.save();
+  ctx.translate(cx,feetY-bob);
+  ctx.rotate(lean);
+  ctx.scale(sqX,sqY*(duck?0.65:1));
+
+  if(rockyCanvas){
+    // Clean transparent version
+    ctx.drawImage(rockyCanvas,-dw/2,-dh*feetFrac,dw,dh);
+  }else{
+    // Fallback: screen blend removes black on dark areas
+    ctx.globalCompositeOperation='screen';
+    ctx.drawImage(rockyImg,-dw/2,-dh*feetFrac,dw,dh);
+    ctx.globalCompositeOperation='source-over';
+  }
+  ctx.restore();
 }
+
 function drawObs(){
   obs.forEach(ob=>{
     const oy=ob.fly?ob.y:GY-ob.h;
