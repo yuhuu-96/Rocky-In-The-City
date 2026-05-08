@@ -44,7 +44,7 @@ function spawnPart(x,y,col){for(let i=0;i<8;i++)parts.push({x,y,col,vx:(Math.ran
 // Sky
 function drawSky(){
   const g=ctx.createLinearGradient(0,0,0,GY);
-  g.addColorStop(0,'#2e86c1');g.addColorStop(0.45,'#87ceeb');g.addColorStop(0.82,'#ffd580');g.addColorStop(1,'#ff9a3c');
+  g.addColorStop(0,'#2e86c1');g.addColorStop(0.45,'#87ceeb');g.addColorStop(0.7,'#d4902a');g.addColorStop(0.88,'#7a4010');g.addColorStop(1,'#3a1a05');
   ctx.fillStyle=g;ctx.fillRect(0,0,W,GY);
   const sx=820,sy=48;
   const sg=ctx.createRadialGradient(sx,sy,6,sx,sy,55);
@@ -94,7 +94,7 @@ function drawRocky(){
   const cx=rock.x+(duck?rock.dw:rock.nw)/2;
   const feetY=rock.y+(duck?rock.dh:rock.nh);
   const bob=duck||rock.jumps>0?0:Math.abs(Math.sin(walkPhase))*(2+spd*4);
-  const dw=duck?85:115,dh=duck?58:115;
+  const dw=duck?100:130,dh=duck?65:130;
   const feetFrac=0.87;
   const drawX=cx-dw/2,drawY=(feetY-bob)-dh*feetFrac;
   // Sync video playback speed to game speed
@@ -103,18 +103,12 @@ function drawRocky(){
   if(!running&&!rockyVid.paused)rockyVid.pause();
   if(duck){rockyVid.playbackRate=0.4;}
   ctx.save();
-  // Dark soft vignette behind Rocky so screen blend removes black bg correctly
-  const rg=ctx.createRadialGradient(cx,feetY-bob-dh*0.42,0,cx,feetY-bob-dh*0.42,dw*0.52);
-  rg.addColorStop(0,'rgba(0,0,0,0.82)');rg.addColorStop(0.7,'rgba(0,0,0,0.65)');rg.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=rg;
-  ctx.beginPath();ctx.ellipse(cx,feetY-bob-dh*0.42,dw*0.52,dh*0.5,0,0,Math.PI*2);ctx.fill();
-  // Draw video frame with screen composite to remove black background
+  // Draw Rocky video with screen blend - black bg disappears on dark ground sky
   if(rockyVid.readyState>=2){
     ctx.globalCompositeOperation='screen';
     ctx.drawImage(rockyVid,drawX,drawY,dw,dh);
     ctx.globalCompositeOperation='source-over';
   }else{
-    // Fallback while video loads
     drawRockyGolem(ctx,cx,feetY-bob-60,walkPhase,speed,duck,rock.jumps>0,rock.landBounce);
   }
   ctx.restore();
@@ -237,5 +231,6 @@ document.getElementById('mDuck').addEventListener('mouseup',()=>doDuck(false));
 document.getElementById('mDuck').addEventListener('touchstart',()=>doDuck(true),{passive:true});
 document.getElementById('mDuck').addEventListener('touchend',()=>doDuck(false),{passive:true});
 gameLoop();
+
 
 
